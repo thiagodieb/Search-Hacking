@@ -28,6 +28,8 @@ class Ghdb{
 
     public $siteGoogle;
 
+    public $error;
+
 	public function __construct($dork,$proxylist=false,$tor=false,$virginProxies=false)
 	{
 
@@ -36,6 +38,8 @@ class Ghdb{
         $this->pathProxy = __DIR__ . '/resource/proxys.json';
         $this->countProxylist=1;
         $this->usginVirginProxies=$virginProxies;
+
+
         if(file_exists($this->pathProxy))
         {
             unlink($this->pathProxy);
@@ -44,6 +48,13 @@ class Ghdb{
         {
             $this->tor='socks5://127.0.0.1:9050';
         }
+
+        $result=$this->validation();
+        if($result)
+        {
+            $this->error=$result;
+        }
+
         $this->setProxyOfSites();
 	}
 
@@ -107,6 +118,30 @@ class Ghdb{
         return $resultFinal;
 
 	}
+
+    private function validation()
+    {
+        if(!$this->checkVirginProxiesExist())
+        {
+            $error['type']="vp";
+            $error['result']="Not exist list of botnets Virgin Proxy";
+            return $error;
+        }
+        return;
+    }
+
+    private function checkVirginProxiesExist()
+    {
+
+        $values=parse_ini_file(__DIR__."/resource/PersonalProxy.ini");
+        if(empty($values))
+        {
+            return false;
+        }
+        return true;
+
+    }
+
     private function getVirginSiteProxies()
     {
         return parse_ini_file(__DIR__."/resource/PersonalProxy.ini");

@@ -108,6 +108,11 @@ class SearchHackingEngine extends Command{
 		$filterProxy=array();
 
         $ghdb = new Ghdb($this->dork,$this->proxylist,$this->tor,$this->vp);
+		if(isset($ghdb->error))
+		{
+			$output->writeln("<error>".$ghdb->error['result']." / Command ".$ghdb->error['type']."</error>");
+			exit();
+		}
         foreach($this->eng as $enginer)
 		{
             switch($enginer)
