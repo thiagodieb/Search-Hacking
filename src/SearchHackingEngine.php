@@ -29,7 +29,7 @@ class SearchHackingEngine extends Command{
 	public $email;
 	public $enginers;
 	public $txt;
-	public $proxylist;
+	public $pl;
 
 	public function __construct(){
 		parent::__construct("search-hacking");
@@ -71,10 +71,10 @@ class SearchHackingEngine extends Command{
 						'Set dork. Example: --tor'),
 
 					new InputOption(
-						'proxylist',
+						'pl',
 						null,
 						InputOption::VALUE_NONE,
-						'Set dork. Example: --proxylist'),
+						'Set dork. Example: --pl'),
 					new InputOption(
 						'vp',
 						null,
@@ -96,31 +96,40 @@ class SearchHackingEngine extends Command{
             )
             ->setHelp('<comment>Command used to brute force</comment>');
     }
-	protected function execute(InputInterface $input, OutputInterface $output){
+	protected function execute(InputInterface $input, OutputInterface $output)
+	{
+
 		$this->validParamns($input,$output);
-		/*$dork    		= $input->getOption('dork');
+		/*
+		$dork    		= $input->getOption('dork');
 		$virginProxies	= $input->getOption('virginProxies');
         $enginiers  	= $input->getOption('enginiers');
 		$email    		= $input->getOption('email');
 		$txt    		= $input->getOption('txt');
 		$tor    		= $input->getOption('tor');
-		$proxylist    	= $input->getOption('proxylist');*/
+		$proxylist    	= $input->getOption('proxylist');
+		*/
+
 		$filterProxy=array();
 
-        $ghdb = new Ghdb($this->dork,$this->proxylist,$this->tor,$this->vp);
-		if(isset($ghdb->error))
-		{
-			$output->writeln("<error>".$ghdb->error['result']." / Command ".$ghdb->error['type']."</error>");
-			exit();
-		}
+		$commandData= array(
+			'dork'=>$this->dork,
+			'pl'=>$this->pl,
+			'tor'=>$this->tor,
+			'virginProxies'=>$this->vp
+		);
+
+        $ghdb = new Ghdb($commandData);
+
+
         foreach($this->eng as $enginer)
 		{
-            switch($enginer)
+
+			switch($enginer)
 			{
                 case 'google':
 					$output->writeln("<comment>*".$enginer."</comment>");
                     $result['google']=$ghdb->runGoogle();
-
                     break;
                 case 'googleapi':
                     $result['googleapi']=$ghdb->runGoogleApi();
@@ -129,6 +138,13 @@ class SearchHackingEngine extends Command{
 					$output->writeln("<comment>Name Enginer not exist, help me and send email with site of searching not have you@example.com ... </comment>");
 					break;
             }
+
+			if(isset($result[$enginer]->error))
+			{
+				$this->printError($result, $output);
+				exit();
+			}
+
         }
 
 		if(!empty($this->email)){
@@ -151,6 +167,7 @@ class SearchHackingEngine extends Command{
 			$output->writeln("<error>example: --dork=\"site:com inurl:/admin\"</error>");
 			$this->runHelp($output);
 		}
+
 		if(!$this->sanitazeValuesOfEnginers($input->getOption('eng')))
 		{
 			$output->writeln("<error>Please, insert your sites of searching... </error>");
@@ -158,19 +175,18 @@ class SearchHackingEngine extends Command{
 			$this->runHelp($output);
 		}
 
-
 		$this->dork    		= $input->getOption('dork');
 		$this->vp			= $input->getOption('vp');
 		$this->eng  		= $this->sanitazeValuesOfEnginers($input->getOption('eng'));
 		$this->email   		= $input->getOption('email');
 		$this->txt    		= $input->getOption('txt');
 		$this->tor	    	= $input->getOption('tor');
-		$this->proxylist   	= $input->getOption('proxylist');
+		$this->pl   	= $input->getOption('pl');
 
 	}
 	
-	private function runHelp($output){
-		
+	private function runHelp($output)
+	{
 		$output->writeln("");
 		$command = $this->getApplication()->find('help');
 		$arguments = array(
@@ -188,6 +204,7 @@ class SearchHackingEngine extends Command{
 		}
 		return false;
 	}
+
 	protected function saveTxt($data,$filename)
 	{
 		$file=__DIR__."/../../../results/".$filename.".txt";
@@ -253,4 +270,11 @@ class SearchHackingEngine extends Command{
 		}
 		$output->writeln("*-------------------------------------------------");
 	}
+
+	private function printError($result, OutputInterface $output)
+	{
+		$output->writeln("");
+		$output->writeln("<error>".$result['google']->error['result']." / Command ".$result['google']->error['type']."</error>");
+	}
+
 }
