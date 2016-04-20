@@ -90,8 +90,8 @@ class Google
 
             $urlOfSearch="https://".$this->siteGoogle."/search?q=".urlencode($this->commandData['dork'])."&num=100&btnG=Search&pws=1".$paginator;
             echo "Page ".$count."\n";
-            if($this->commandData['virginProxies'])
-            {
+
+            if($this->commandData['virginProxies']) {
                 $arrLinks=$this->getLinksByVirginProxies($urlOfSearch,$this->listOfVirginProxies[$countProxyVirgin]);
 
                 if($arrLinks=="repeat")
@@ -108,8 +108,7 @@ class Google
                     $countProxyVirgin++;
                 }
             }
-            else
-            {
+            else{
                 $arrLinks=$this->getLinks($urlOfSearch);
             }
 
@@ -118,7 +117,7 @@ class Google
             $utils=new Utils();
             $results=$utils->sanitazeLinks($arrLinks);
 
-            if(count($results)==0 AND $arrLinks!="repeat"){
+            if( (count($results)==0 AND $arrLinks!="repeat") OR ($this->commandData['virginProxies']) ){
                 $exit=true;
             }
             $resultFinal=array_merge($resultFinal,$results);
@@ -175,10 +174,11 @@ class Google
 
     public function getLinks($urlOfSearch)
     {
+        echo "*";
         $header= new FakeHeaders();
         $valid=true;
-        while($valid==true)
-        {
+//        while($valid==true)
+//        {
             try{
                 $client 	= new Client([
                     'defaults' => [
@@ -188,23 +188,26 @@ class Google
                     ]
                 ]);
                 $body 		= $client->get($urlOfSearch)->getBody()->getContents();
-                $valid=false;
+                //$valid=false;
+                $crawler 	= new Crawler($body);
+                $arrLinks 	= $crawler->filter('a');
+                return $arrLinks;
 
             }catch(\Exception $e){
 
                 echo "ERROR : ".$e->getMessage()."\n";
                 if($this->proxy==false){
                     echo "Your ip is blocked, we are using proxy at now...\n";
-                    $this->pl= true;
+                    //$valid=false;
                 }
                 //$this->setProxyOfSites();
-                sleep(2);
+                //sleep(2);
             }
-        }
 
-        $crawler 	= new Crawler($body);
-        $arrLinks 	= $crawler->filter('a');
-        return $arrLinks;
+            return false;
+//        }
+
+
     }
 
 

@@ -207,8 +207,7 @@ class SearchHackingEngine extends Command{
 
 	protected function saveTxt($data,$filename)
 	{
-		$file=__DIR__."/../../../results/".$filename.".txt";
-		var_dump($file);
+		$file=__DIR__."/../results/".$filename.".txt";
 		$myfile = fopen($file, "w") or die("Unable to open file!");
 		if(is_array($data)){
 			foreach($data as $dataType)

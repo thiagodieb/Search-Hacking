@@ -9,22 +9,22 @@ namespace Aszone\Component\SearchHacking\Lib\Ghdb;
 
 class Utils
 {
-    public function sanitazeLinks($links){
-        $hrefs= array();
-        foreach ($links as $keyLink => $valueLink)
-        {
+    public function sanitazeLinks($links=array()){
 
-            $url=$this->clearLink($valueLink->getAttribute('href'));
-            $validResultOfBlackList=$this->checkBlacklist($url);
+        $hrefs=array();
+        if(!empty($links)) {
+            foreach ($links as $keyLink => $valueLink) {
 
-            if(!$validResultOfBlackList AND $url)
-            {
-                $hrefs[]=$url;
+                $url = $this->clearLink($valueLink->getAttribute('href'));
+                $validResultOfBlackList = $this->checkBlacklist($url);
 
+                if (!$validResultOfBlackList AND $url) {
+                    $hrefs[] = $url;
+
+                }
             }
+            $hrefs = array_unique($hrefs);
         }
-        $hrefs = array_unique($hrefs);
-
         return $hrefs;
     }
 
