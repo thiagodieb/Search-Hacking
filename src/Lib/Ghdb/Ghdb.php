@@ -2,10 +2,11 @@
 
 namespace Aszone\Component\SearchHacking\Lib\Ghdb;
 
-use Aszone\Component\SearchHacking\Lib\FakeHeaders\FakeHeaders;
-use GuzzleHttp\Client;
-use Symfony\Component\DomCrawler\Crawler;
+use Aszone\Component\SearchHacking\Lib\Ghdb\Engineers\GoogleApi;
 use Aszone\Component\SearchHacking\Lib\Ghdb\Engineers\Google;
+use Aszone\Component\SearchHacking\Lib\Ghdb\Engineers\Bing;
+use Aszone\Component\SearchHacking\Lib\Ghdb\Engineers\Yandex;
+use Aszone\Component\SearchHacking\Lib\Ghdb\Engineers\Yahoo;
 
 
 class Ghdb{
@@ -64,9 +65,6 @@ class Ghdb{
 
 	public function runGoogle()
     {
-
-//        $listOfVirginProxies = $this->Proxies->getVirginSiteProxies();
-//        $google = new Google($this->dork,$listOfVirginProxies);
         $google = new Google($this->commandData);
         if($google->error)
         {
@@ -78,71 +76,47 @@ class Ghdb{
 
     public function runGoogleApi()
     {
-        $exit=false;
-        $count=0;
-        $paginator="";
-        $resultFinal=array();
-        while ($exit == false) {
-            if($count!=0){
-                $numPaginator=100*$count;
-                $paginator="&start=".$numPaginator;
-            }
-            $urlOfSearch="http://ajax.googleapis.com/ajax/services/search/web?v=1.0&rsz=8&q=".$this->dork.$paginator."&userip=".$this->getIp()."&filter=1&safe=off&num=100";
-            echo $urlOfSearch;
-
-            $arrLinks=$this->getJsonSearch($urlOfSearch);
-            $results=$this->getJsonGoogleApi($arrLinks);
-            $results=$this->sanitazeLinksJson($results);
-            if(count($results)==0){
-                $exit=true;
-            }
-            $resultFinal=array_merge($results,$resultFinal);
-            $count++;
+        $googleApi = new GoogleApi($this->commandData);
+        if($googleApi->error)
+        {
+            return $googleApi;
         }
-        return $resultFinal;
+        return $googleApi->run();
     }
+
+    public function runBing()
+    {
+        $bing = new Bing($this->commandData);
+        if($bing->error)
+        {
+            return $bing;
+        }
+        return $bing->run();
+    }
+
+    public function runYandex()
+    {
+        $yandex = new Yandex($this->commandData);
+        if($yandex->error)
+        {
+            return $yandex;
+        }
+        return $yandex->run();
+    }
+
+    public function runYahoo()
+    {
+        $yahoo = new Yahoo ($this->commandData);
+        if($yahoo->error)
+        {
+            return $yahoo;
+        }
+        return $yahoo->run();
+    }
+
 
     public function runDuckduckGo(){
         //https://api.duckduckgo.com/html/?q=[DORK]&kl=en-us&p=-1&s=[PAG]&dc=[PAG3]&o=json&api=d.js
-    }
-
-    public function sanitazeLinksJson($links)
-    {
-        $hrefs=array();
-        foreach ($links as $keyLink => $valueLink)
-        {
-            $url=$this->clearLink($valueLink);
-            $validResultOfBlackList=$this->checkBlacklist($url);
-            if(!$validResultOfBlackList)
-            {
-                $hrefs[]=$valueLink;
-            }
-        }
-        $hrefs = array_unique($hrefs);
-        return $hrefs;
-
-    }
-
-    public function getIp(){
-        return intval(rand() % 255) . "." . intval(rand() % 255) . "." . intval(rand() % 255) . "." . intval(rand() % 255);
-    }
-
-    public function getJsonSearch($urlOfSearch){
-        $client 	= new Client();
-        $body 		= $client->get($urlOfSearch)->getBody()->getContents();
-        $result=json_decode($body);
-        return $result;
-        //return $arrLinks;
-    }
-
-    public function getJsonGoogleApi($listGoogleApi=""){
-        $arrayFinal=array();
-        if(isset($listGoogleApi->responseData->results)){
-            foreach($listGoogleApi->responseData->results as $result){
-                $arrayFinal[]=$result->url;
-            }
-        }
-        return $arrayFinal;
     }
 
 

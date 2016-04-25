@@ -10,14 +10,10 @@ use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Input\InputDefinition;
 use Symfony\Component\Console\Helper\Table;
-use Symfony\Component\Console\Helper\ProgressBar;
 
-use Respect\Validation\Validator as v;
-
-use Aszone\Component\SearchHacking\Lib\WordPress\WordPress;
+/*use Aszone\Component\SearchHacking\Lib\WordPress\WordPress;*/
 use Aszone\Component\SearchHacking\Lib\Ghdb\Ghdb;
 use Aszone\Component\SearchHacking\Lib\Mailer;
-use Aszone\Component\SearchHacking\Lib\GuzzleTor;
 
 
 class SearchHackingEngine extends Command{
@@ -60,9 +56,9 @@ class SearchHackingEngine extends Command{
 					),
 					new InputOption(
 						'txt',
-						null,
-						InputOption::VALUE_NONE,
-						'Set dork. Example: --txt'),
+						't',
+						InputOption::VALUE_REQUIRED,
+						'Set dork. Example: --txt="dork_for_sql"'),
 
 					new InputOption(
 						'tor',
@@ -124,16 +120,24 @@ class SearchHackingEngine extends Command{
 
         foreach($this->eng as $enginer)
 		{
-
+			$output->writeln("<comment>*".$enginer."</comment>");
 			switch($enginer)
 			{
                 case 'google':
-					$output->writeln("<comment>*".$enginer."</comment>");
                     $result['google']=$ghdb->runGoogle();
                     break;
                 case 'googleapi':
                     $result['googleapi']=$ghdb->runGoogleApi();
                     break;
+				case 'bing':
+					$result['bing']=$ghdb->runBing();
+					break;
+				case 'yandex':
+					$result['yandex']=$ghdb->runYandex();
+					break;
+				case 'yahoo':
+					$result['yahoo']=$ghdb->runYahoo();
+					break;
 				default:
 					$output->writeln("<comment>Name Enginer not exist, help me and send email with site of searching not have you@example.com ... </comment>");
 					break;
@@ -147,13 +151,33 @@ class SearchHackingEngine extends Command{
 
         }
 
+		$output->writeln("");
+		$output->writeln("<info>Begin Results...</info>");
+		$output->writeln("");
 		if(!empty($this->email)){
 			$this->sendMail($result,$this->email);
+			$output->writeln("<info>********Email to send:********</info>");
+			$output->writeln("*-------------------------------------------------");
+			$output->writeln("<info>".$this->email."</info>");
+			$output->writeln("*-------------------------------------------------");
+			$output->writeln("");
 		}
 
+		//Generate name file of txt
+		$nameFile=$this->createNameFile();
 		if(!empty($this->txt)){
-			$this->saveTxt($result,$this->createNameFile());
+			$nameFile=$this->txt;
 		}
+
+		//Save txt and print
+		$file= $this->saveTxt($result,$nameFile);
+		$output->writeln("<info>********Patch File:********</info>");
+		$output->writeln("*-------------------------------------------------");
+		$output->writeln("<info>".$file."</info>");
+		$output->writeln("*-------------------------------------------------");
+		$output->writeln("");
+
+
 
 		$this->printResult($result,$output);
 
@@ -229,7 +253,7 @@ class SearchHackingEngine extends Command{
 		if(!file_exists($file)){
 			return false;
 		}
-		return true;
+		return $file;
 
 	}
 
@@ -259,15 +283,21 @@ class SearchHackingEngine extends Command{
 	protected function printResult($resultFinal, OutputInterface $output)
 	{
 
+		$output->writeln("");
+		$output->writeln("<info>********List of result:********</info>");
+		$table = new Table($output);
+		$table->setHeaders(array('Enginer', 'List of result'));
+		$arrayToTable=array();
 		foreach($resultFinal as $keyResultEnginer=>$resultEnginer){
-			foreach($resultFinal as $keyResult=> $result){
-				var_dump($keyResult);
-				exit();
-				$output->writeln("*-------------------------------------------------");
-				$output->writeln("<info>*".$keyResultEnginer." -> ".$result."</info>");
+			foreach($resultEnginer as $keyResult=> $result){
+				$arrayToTable[]=array($keyResultEnginer,$result);
+				/*$output->writeln("*<info>*".$keyResultEnginer." -> ".$result."</info>");
+				$output->writeln("*-------------------------------------------------");*/
 			}
 		}
-		$output->writeln("*-------------------------------------------------");
+		$table->setRows($arrayToTable);
+		$table->render();
+
 	}
 
 	private function printError($result, OutputInterface $output)
